@@ -1,0 +1,22 @@
+- name: find zabbix_documentation_directory
+  find:
+    paths:
+      - /usr/share/doc
+    file_type: directory
+    use_regex: yes
+    patterns:
+      - '^zabbix-server-mysql'
+      - '^zabbix-server-mysql-.*'
+  register: zabbix_documentation_directory_found
+
+- name: unarchive zabbix schema
+  command: gunzip {{ item.path }}/create.sql.gz
+  args:
+    creates: "{{ item.path }}/create.sql"
+  with_items:
+    - "{{ zabbix_documentation_directory_found.files | last }}"
+  notify:
+    - import zabbix schema
+    - restart zabbix_server
+  loop_control:
+    label: "{{ item.path }}"

@@ -1,0 +1,16 @@
+# roles/ROLENAME/tasks/main.yml
+---
+
+- name: Configure Zabbix
+  template:
+    src: zabbixserver.conf.j2
+    dest: "{{ zabbixserver_config_server }}"
+  notify: restart zabbixserver
+  tags: zabbixserver
+
+- name: Ensure service is started
+  service:
+    name: "{{ zabbixserver_service }}"
+    state: started
+    enabled: yes
+  tags: zabbixserver

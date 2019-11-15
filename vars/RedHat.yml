@@ -1,0 +1,15 @@
+# roles/ROLENAME/vars/RedHat.yml
+#
+# Distribution-specific variables for RHEL, CentOS, ...
+---
+
+#zabbix_packages:
+#  - zabbixserver
+#  - MySQL-python
+
+_zabbixserver_req:
+    - MySQL-python
+
+zabbix_service: zabbixserverd
+
+zabbixserver_config_server: /etc/my.cnf.d/zabbixserver.conf

@@ -1,0 +1,27 @@
+# roles/ROLENAME/tasks/main.yml
+---
+
+- name: Download Zabbix
+  yum_repository:
+    name: ZabbixServer
+    description: Zabbix download
+    url: https://repo.zabbix.com/zabbix/4.4/rhel/7/x86_64/zabbix-release-4.4-1.el7.noarch.rpm
+    gpgcheck: 0
+    gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ZABBIX
+    state: present
+  tags: zabbixserver
+
+- name: Install packages
+  package:
+    name: "{{ item }}"
+    state: installed
+  with_items: "{{ zabbixserver_packages }}"
+  tags: zabbixserver
+
+- name: install zabbix_server_mysql
+  package:
+    name: zabbix-server-mysql
+    state: present
+  register: zabbix_server_install_zabbix_server
+  until: zabbix_server_install_zabbix_server is succeeded
+  retries: 3

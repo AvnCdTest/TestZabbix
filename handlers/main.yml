@@ -1,0 +1,21 @@
+# roles/ROLENAME/handlers/main.yml
+---
+
+- name: restart zabbixserver
+  service:
+    name: "{{ zabbixserver_service }}"
+    state: restarted
+    enabled: yes
+
+- name: import zabbix schema
+  mysql_db:
+    state: import
+    name: zabbix
+    target: "{{ item.path }}/create.sql"
+    login_host: "{{ zabbix_server_database_host }}"
+    login_user: "{{ zabbix_server_database_user }}"
+    login_password: "{{ zabbix_server_dbpassword }}"
+  with_items:
+    - "{{ zabbix_documentation_directory_found.files | last }}"
+  loop_control:
+    label: "{{ item.path }}/create.sql"
