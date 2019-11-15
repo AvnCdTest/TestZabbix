@@ -8,6 +8,6 @@
   tags: zabbixserver
 
 - include_tasks: install.yml
-- include_tasks: config.yml
 - include_tasks: findUnarchive.yml
 - include_tasks: SELinux.yml
+- include_tasks: config.yml
