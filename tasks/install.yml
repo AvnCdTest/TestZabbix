@@ -1,27 +1,158 @@
-# roles/ROLENAME/tasks/main.yml
+# roles/zabbix-server/tasks/install.yml
 ---
 
-- name: Download Zabbix
-  yum_repository:
-    name: ZabbixServer
-    description: Zabbix download
-    url: https://repo.zabbix.com/zabbix/4.4/rhel/7/x86_64/zabbix-release-4.4-1.el7.noarch.rpm
-    gpgcheck: 0
-    gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ZABBIX
+- name: install zabbix_server requirements
+  package:
+    name: "{{ _zabbix_server_requirements }}"
     state: present
-  tags: zabbixserver
-
+  register: zabbix_server_install_zabbix_server_requirements
+  retries: 3
+  until: zabbix_server_install_zabbix_server_requirements is succeeded
+  
+- name: Add official MariaDB repository
+  yum_repository:
+    name: MariaDB
+    description: Official MariaDB repository
+    baseurl: "http://{{ mariadb_mirror }}/{{ mariadb_version }}/{{ ansible_distribution|lower|regex_replace('redhat', 'rhel')|regex_replace('oraclelinux', 'centos') }}{{ ansible_distribution_major_version }}-amd64"
+    gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+    gpgcheck: true
+  tags: mariadb
+  
 - name: Install packages
   package:
     name: "{{ item }}"
     state: installed
-  with_items: "{{ zabbixserver_packages }}"
-  tags: zabbixserver
+  with_items: "{{ mariadb_packages }}"
+  tags: mariadb
+  
+- name: Install server config file
+  template:
+    src: etc_my.cnf.d_server.cnf.j2
+    dest: "{{ mariadb_config_server }}"
+  notify: restart mariadb
+  tags: mariadb
 
-- name: install zabbix_server_mysql
-  package:
-    name: zabbix-server-mysql
+- name: Install network config file
+  template:
+    src: etc_my.cnf.d_network.cnf.j2
+    dest: "{{ mariadb_config_network }}"
+  notify: restart mariadb
+  tags: mariadb
+
+- name: Install custom config file
+  template:
+    src: etc_my.cnf.d_custom.cnf.j2
+    dest: "{{ mariadb_config_custom }}"
+  when: mariadb_custom_cnf|length != 0
+  notify: restart mariadb
+  tags: mariadb
+
+- name: Configure swappiness
+  sysctl:
+    name: vm.swappiness
+    value: "{{ mariadb_swappiness }}"
     state: present
-  register: zabbix_server_install_zabbix_server
-  until: zabbix_server_install_zabbix_server is succeeded
-  retries: 3
+  when: mariadb_configure_swappiness|bool
+  tags: mariadb
+
+- name: Ensure service is started
+  service:
+    name: "{{ mariadb_service }}"
+    state: started
+    enabled: true
+  tags: mariadb
+  
+- name: Set MariaDB root password for the first time (root@localhost)
+  mysql_user:
+    name: "{{ zabbix_server_database_user }}"
+    password: "{{ zabbix_server_dbpassword }}"
+    host: localhost
+    login_unix_socket: "{{ zabbix_server_dbsocket }}"
+    state: present
+  tags: mariadb
+  
+- name: Set MariaDB root password for 127.0.0.1, ::1
+  mysql_user:
+    name: "{{ zabbix_server_database_user }}"
+    password: "{{ zabbix_server_dbpassword }}"
+    host: "{{ item }}"
+    login_user: root
+    login_password: root
+    login_unix_socket: "{{ zabbix_server_dbsocket }}"
+    state: present
+  with_items:
+    - ::1
+    - 127.0.0.1
+  tags: mariadb
+  
+- name: Remove the test database
+  mysql_db:
+    name: test
+    login_user: root
+    login_password: root
+    login_unix_socket: "{{ zabbix_server_dbsocket }}"
+    state: absent
+  tags: mariadb
+  
+- name: Create user defined databases
+  mysql_db:
+    name: zabbix
+    login_user: "{{ zabbix_server_database_user }}"
+    login_password: "{{ zabbix_server_dbpassword }}"
+    login_unix_socket: "{{ zabbix_server_dbsocket }}"
+    state: present
+  register: db_creation
+  tags: mariadb
+
+- name: Remove anonymous users
+  mysql_user:
+    name: ''
+    host_all: true
+    login_user: "{{ zabbix_server_database_user }}"
+    login_password: "{{ zabbix_server_dbpassword }}"
+    login_unix_socket:  "{{ zabbix_server_dbsocket }}"
+    state: absent
+  tags: mariadb
+  
+
+- name: Create the users
+  mysql_user:
+    name: "{{ item.name }}"
+    host: "{{ item.host|default('localhost') }}"
+    priv: "{{ item.priv }}"
+    append_privs: "{{ item.append_privs|default('no') }}"
+    login_user: root
+    login_password: "{{ zabbix_server_dbpassword }}"
+    login_unix_socket: "{{ zabbix_server_dbsocket }}"
+    state: present
+  with_items: "{{ mariadb_users }}"
+  tags: mariadb
+
+- name: install zabbix repo
+  shell: rpm -Uvh https://repo.zabbix.com/zabbix/4.4/rhel/7/x86_64/zabbix-release-4.4-1.el7.noarch.rpm
+
+- name: install zabbix server-mysql 
+  package: 
+    name: zabbix-server-mysql
+- name: install zabbix web-mysql    
+  package:
+    name: zabbix-web-mysql
+- name: install zabbix agent
+  package:
+    name: zabbix-agent
+- name: install zabbix get   
+  package:
+    name: zabbix-get
+
+- name: set zabbix db to zabbix-server db
+  shell: zcat /usr/share/doc/zabbix-server-mysql-4.4.3/create.sql.gz | mysql -u{{ zabbix_server_database_user }} -p{{ zabbix_server_dbpassword }} {{ zabbix_server_database_name }}
+  notify: restart httpd
+
+# Timezone
+- name: "Configuration | Configure php.ini date.timezone"
+  lineinfile:
+    dest: "{{ php_ini_filename }}"
+    line: "date.timezone = {{ php_date_timezone }}"
+    state: present
+  tags: [ "php", "configuration" ]
+

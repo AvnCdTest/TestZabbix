@@ -7,11 +7,18 @@ SourceIP={{ zabbix_server_ip }}
 LogType={{ zabbix_server_logtype }}
 # Type of logs from Server
 
+LogFile= {{ zabbix_server_logfile }}
+
+
 # Portnumber to listen on
 ListenPort={{ zabbix_server_port }}
 
+SocketDir={{ zabbix_server_socketDir }}
+
 # Database host name
 DBHost={{ zabbix_server_database_host }}
+
+PidFile={{ zabbix_server_pidFile }}
 
 # Database name
 DBName={{ zabbix_server_database_name }}
@@ -21,6 +28,7 @@ DBUser={{ zabbix_server_database_user }}
 
 # Database password
 DBPassword={{ zabbix_server_dbpassword }}
+
 
 # Database schema
 {% if zabbix_server_database_schema is defined and zabbix_server_database_schema %}
@@ -32,13 +40,12 @@ DBSchema={{ zabbix_server_database_schema }}
 DBPort={{ zabbix_server_database_port }}
 {% endif %}
 
-{% if zabbix_server_version is zabbix_server_version('2.2', '>=') %}
-# Allow to run as 'root'. We work with vagrant. If this option is disabled, the server will start as 'vagrant'.
+
 AllowRoot={{ zabbix_server_allowroot }}
-{% endif %}
 
 
-{% if zabbix_version is version_compare('3.0', '>=') %}
+
+{% if zabbix_server_version is version_compare('3.0', '>=') %}
 # Will allow to go to an existing user. This can only work is you run as 'root', 'AllowRoot' is disabled.
 User={{ zabbix_server_user }}
 {% endif %}

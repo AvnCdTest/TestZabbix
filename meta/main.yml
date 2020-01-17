@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: Arno Van Nieuwenhove & Cedric Detemmerman
-  description: An ansible role made by 2 students from the Hogent highschool in Belgium. It seemed convenient to monitor the traffic using Zabbix.
+  description: An ansible role made by 2 students from the Hogent highschool in Belgium (2019). Part of our assignment was to set up a web server automatically with Ansible. It seemed convenient to monitor the traffic using our own Zabbix role. Our goal was to write a role about Ansible who doesn't need prerequisites. With this one we succeeded and php, mariadb and zabbix will be installed and configured automatically. The one thing you need is the minimum variable.
   license: BSD
   min_ansible_version: 2.0
   platforms:
@@ -13,4 +13,6 @@ galaxy_info:
     - network
     - monitor
     - zabbix
+    - php
+    - mariadb
 dependencies: []

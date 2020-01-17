@@ -1,27 +1,23 @@
 # roles/ROLENAME/defaults/main.yml
 ---
 
-zabbix_server_version: 4.4
 zabbix_server_repo: zabbixserver
 
-
+zabbix_server_pidFile: /run/zabbix/zabbix_server.pid
 # Configure and initialize DB for Zabbix Server
+zabbix_server_ip: 
 zabbix_server_database_name: zabbix
-zabbix_server_dbpassword: zabbix
-zabbix_server_database_user: admin
-zabbix_server_database_host: localhost
+zabbix_server_dbpassword: root
+zabbix_server_database_user: root
+zabbix_server_database_host: 127.0.0.1
 zabbix_server_database_port: 3306
 zabbix_server_database_schema:
-zabbix_server_dbsocket:
-
-zabbix_server_ip:
-zabbix_server_logtype: file
 zabbix_server_port: 10051
 zabbix_server_domain: 
-zabbix_server_user: admin
+zabbix_server_user: root
 zabbix_server_name: zabbixserver
-zabbix_server_allowroot: 0
+zabbix_server_allowroot: 1
 zabbix_server_logpath: /var/log/networkmonitor/zabbixS.log
-zabbix_server_unicode: utf8
-zabbix_server_datasort: utf8_bin
-zabbixserver_config_server: /etc/zabbixserver/zabbixserver.conf
+
+# PHP
+php_date_timezone: "Europe/Brussels"

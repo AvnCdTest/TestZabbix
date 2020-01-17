@@ -1,6 +1,6 @@
 # BSD License
 
-Copyright (c) YEAR, Bert Van Vreckem, (bert.vanvreckem@gmail.com)
+Copyright (c) 2019, Arno Van Nieuwenhove (arnovn@hotmail.be), Cedric Detemmerman (cedricq9@gmail.com), Bert Van Vreckem (bert.vanvreckem@gmail.com)
 
 All rights reserved.
 

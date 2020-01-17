@@ -3,7 +3,7 @@
 
 - name: restart zabbixserver
   service:
-    name: "{{ zabbixserver_service }}"
+    name: "{{ zabbix_server_service }}"
     state: restarted
     enabled: yes
 
@@ -19,3 +19,14 @@
     - "{{ zabbix_documentation_directory_found.files | last }}"
   loop_control:
     label: "{{ item.path }}/create.sql"
+
+- name: restart mariadb
+  service:
+    name: '{{ mariadb_service }}'
+    state: restarted
+    
+- name: restart httpd
+  service:
+    name: httpd
+    state: restarted
+    enabled: yes
